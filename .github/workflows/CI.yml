@@ -53,7 +53,6 @@ jobs:
           artifacts: dist/*.whl
           allowUpdates: true
           removeArtifacts: true
-          replacesArtifacts: true
           makeLatest: true
           name: "maze"
       - name: Release URL
