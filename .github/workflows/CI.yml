@@ -38,7 +38,7 @@ jobs:
           sccache: 'true'
           manylinux: auto
       - name: Upload wheel (${{ matrix.python-version }})
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist
@@ -49,6 +49,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: dist
       - name: Create release
         id: release
         uses: ncipollo/release-action@v1
@@ -62,7 +67,7 @@ jobs:
           name: "maze"
       - name: Release URL
         run: |
-          echo "Release URL: ${{ steps.release.outputs.upload_url }}"
+          echo "Release URL: ${{ steps.release.outputs.html_url }}"
 
   sdist:
     runs-on: ubuntu-latest
