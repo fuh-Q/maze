@@ -52,6 +52,7 @@ jobs:
           commit: main
           artifacts: dist/*.whl
           allowUpdates: true
+          removeArtifacts: true
           replacesArtifacts: true
           makeLatest: true
           name: "maze"
