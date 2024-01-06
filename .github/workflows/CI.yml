@@ -52,6 +52,8 @@ jobs:
           commit: main
           artifacts: dist/*.whl
           allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
           name: "maze"
       - name: Release URL
         run: |
