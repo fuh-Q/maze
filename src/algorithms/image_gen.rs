@@ -96,14 +96,6 @@ pub fn solution_image(
     solution.par_iter().for_each(|(node1, node2)| {
         let (x, y) = ((((node1.0 + 1) * CELL) * 2), (((node1.1 + 1) * CELL) * 2));
         let rect = if node1.0 == node2.0 {
-            let coords = if node1.0 < node2.0 {
-                (x - 43 - SHIFT, y - WALL_THICKNESS - SHIFT)
-            } else {
-                (x - WALL_THICKNESS - SHIFT, y - WALL_THICKNESS - SHIFT)
-            };
-
-            Rect::at(coords.0, coords.1).of_size(46, 6)
-        } else {
             let coords = if node1.1 < node2.1 {
                 (x - WALL_THICKNESS - SHIFT, y - WALL_THICKNESS - SHIFT)
             } else {
@@ -111,6 +103,14 @@ pub fn solution_image(
             };
 
             Rect::at(coords.0, coords.1).of_size(6, 46)
+        } else {
+            let coords = if node1.0 < node2.0 {
+                (x - WALL_THICKNESS - SHIFT, y - WALL_THICKNESS - SHIFT)
+            } else {
+                (x - 43 - SHIFT, y - WALL_THICKNESS - SHIFT)
+            };
+
+            Rect::at(coords.0, coords.1).of_size(46, 6)
         };
 
         let img = shared.get_image_mut();
