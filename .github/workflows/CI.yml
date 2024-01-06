@@ -45,6 +45,8 @@ jobs:
         id: release
         uses: ncipollo/release-action@v1
         with:
+          tag: release-tag
+          commit: main
           artifacts: wheels/*.whl
       - run: |
           echo "Release URL: ${{ steps.release.outputs.upload_url }}"
