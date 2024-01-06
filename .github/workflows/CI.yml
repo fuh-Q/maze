@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
+        target: [x86_64]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -41,6 +41,14 @@ jobs:
         with:
           name: wheels
           path: dist
+      - name: Create release
+        id: release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: wheels/*.whl
+      - run: |
+          echo "Release URL: ${{ steps.release.outputs.upload_url }}"
+
 
   sdist:
     runs-on: ubuntu-latest
