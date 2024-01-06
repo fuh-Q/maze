@@ -50,7 +50,8 @@ jobs:
           tag: release-tag
           commit: main
           artifacts: dist/*.whl
-          replacesArtifacts: true
+          allowUpdates: true
+          name: "maze"
       - name: Release URL
         run: |
           echo "Release URL: ${{ steps.release.outputs.upload_url }}"
