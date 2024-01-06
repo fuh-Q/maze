@@ -40,6 +40,7 @@ jobs:
           python-version: ${{ matrix.py-version }}
       - name: Install dependencies
         run: |
+          yum install -y clang lld
           python${{ matrix.py-version }} -m pip install -U pip
           python${{ matrix.py-version }} -m pip install -U maturin
       - name: Build wheel
