@@ -34,7 +34,7 @@ jobs:
       - name: Upload wheel (py-${{ matrix.python-version }})
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.python-version }}
+          name: wheel-${{ matrix.python-version }}-${{ matrix.target }}
           path: dist
 
   release:
