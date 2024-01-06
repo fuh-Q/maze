@@ -97,14 +97,22 @@ impl Maze {
     ///
     /// this call clones a Rust object and converts it to Python,
     /// which introduces a significant amount of overhead (use it sparingly!)
-    fn get_solution_expensively(&mut self, py: Python) -> PyResult<PyObject> {
+    fn get_solution_expensively<'py>(&mut self, py: Python<'py>) -> PyResult<&'py PyAny> {
         if self.solution_moves.is_none() {
             const MSG: &str = "make sure to call `.compute_solution()` first";
             return Err(SolutionNotFound::new_err(MSG));
         }
 
         let solution = self.solution_moves.clone().unwrap();
-        Ok(solution.into_py(py))
+
+        let collections = py.import("collections")?;
+        let tuple_fields = ["move_count", "directions"].into_py(py);
+        let type_args = PyTuple::new(py, ["Solution".into_py(py), tuple_fields]);
+
+        collections
+            .getattr("namedtuple")?
+            .call1(type_args)? // instantiates the namedtuple type
+            .call1(solution) // instantiates an instance of said type
     }
 
     /// clones the maze image into a `io.BytesIO` buffer in Python
@@ -112,14 +120,14 @@ impl Maze {
     /// this call clones a Rust object and converts it to Python,
     /// which introduces a significant amount of overhead (use it sparingly!)
     fn get_image_expensively<'py>(&self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        let io = py.import("io")?;
-        let builtins = py.import("builtins")?;
-
         let mut buf = Cursor::new(vec![]);
         match self.maze_image.write_to(&mut buf, ImageOutputFormat::Png) {
             Ok(()) => (),
             Err(e) => return Err(PyIOError::new_err(format!("could not write image: {e}"))),
         }
+
+        let io = py.import("io")?;
+        let builtins = py.import("builtins")?;
 
         let data = PyTuple::new(py, [buf.into_inner()]);
         let arr = builtins.getattr("bytearray")?.call1(data)?;
