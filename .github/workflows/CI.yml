@@ -40,8 +40,8 @@ jobs:
           pip install -U pip
           pip install -U maturin
       - name: Build wheel
-        run: maturin build --release --strip --out dist --interpreter ${{ matrix.py-version }} --compatibility manylinux_2_17
-      - name: Upload wheels
+        run: maturin build --release --strip --out dist --interpreter ${{ matrix.py-version }} --compatibility manylinux2014
+      - name: Upload wheel
         uses: actions/upload-artifact@v3
         with:
           name: wheels
