@@ -1,0 +1,19 @@
+[build-system]
+build-backend = "maturin"
+requires = ["maturin>=1.4,<2.0"]
+
+[project]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+dynamic = ["version"]
+name = "maze"
+repository = "https://github.com/fuh-Q/maze"
+requires-python = ">=3.8"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "pysrc"
