@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        target: [x86_64]
+        target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,13 +50,13 @@ jobs:
         id: release
         uses: ncipollo/release-action@v1
         with:
-          tag: release-tag
+          tag: maze
+          name: "maze"
           commit: main
-          artifacts: dist/*.whl
+          makeLatest: true
           allowUpdates: true
           removeArtifacts: true
-          makeLatest: true
-          name: "maze"
+          artifacts: dist/*.whl
       - name: Release URL
         run: |
           echo "Release URL: ${{ steps.release.outputs.html_url }}"
