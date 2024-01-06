@@ -26,6 +26,9 @@ jobs:
         py-version: ["3.10", "3.11", "3.12"]
     permissions:
       contents: write
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64:latest
+      options: --user 0
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
