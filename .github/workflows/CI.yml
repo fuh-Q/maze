@@ -49,7 +49,7 @@ jobs:
         with:
           tag: release-tag
           commit: main
-          artifacts: wheels/*.whl
+          artifacts: dist/*.whl
       - name: Release URL
         run: |
           echo "Release URL: ${{ steps.release.outputs.upload_url }}"
