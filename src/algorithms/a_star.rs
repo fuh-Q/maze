@@ -80,22 +80,19 @@ fn get_moves(width: i32, height: i32, path: &EdgeVec, walls: &EdgeSet) -> (i32, 
     // the solution path, is just as if you moved one space at a time
     let mut n_moves = 0;
     let mut perfect_run = vec![];
-    let mut prev_diff: Option<(i32, i32)> = None;
+
+    let (_, first_af) = path.iter().copied().next().unwrap(); // path is never empty
+    let mut prev_diff = (0 - first_af.0, 0 - first_af.1);
     let mut prev_turn_point = (0, 0);
 
     for (before, current) in path.iter().copied() {
         let diff = (current.0 - before.0, current.1 - before.1);
-
-        // `if let` plus a comparison on the matched value in the same expression is unstable
-        // so i flipped the if statement around
-        if prev_diff.is_none() {
-            prev_diff = Some(diff);
-        } else if prev_diff.unwrap() == diff {
+        if prev_diff == diff {
             continue;
         }
 
-        let old_diff = prev_diff.unwrap(); // it's not none
-        prev_diff = Some(diff);
+        let old_diff = prev_diff;
+        prev_diff = diff;
 
         let diff_to_prev = (
             i32::abs_diff(prev_turn_point.0, before.0),
@@ -135,7 +132,7 @@ fn get_moves(width: i32, height: i32, path: &EdgeVec, walls: &EdgeSet) -> (i32, 
 
     n_moves += 1;
     perfect_run.push(match_diff(
-        prev_diff.unwrap(),
+        prev_diff,
         // maze coordinates are zero-indexed, so width and height are adjusting accordingly
         prev_turn_point != (width - 2, height - 1) && prev_turn_point != (width - 1, height - 2),
         1,
