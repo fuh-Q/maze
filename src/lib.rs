@@ -12,11 +12,11 @@ use util::{out_of_bounds, wall_between};
 use image::{imageops, ImageOutputFormat, Rgba};
 use imageproc::{definitions::Image, drawing::draw_filled_rect_mut, rect::Rect};
 
-use std::{collections::HashSet, io::Cursor};
+use std::{collections::HashSet, io::Cursor, sync::Arc};
 
-use pyo3::create_exception;
 use pyo3::prelude::*;
 use pyo3::{
+    create_exception,
     exceptions::{PyException, PyIOError, PyValueError},
     types::{PyBytes, PySequence, PyTuple},
 };
@@ -30,7 +30,7 @@ struct Maze {
     height: i32,
     bg_colour: Pxl,
     solution_colour: Pxl,
-    solution_moves: Option<(i32, Vec<String>)>,
+    solution_moves: Option<(i32, Arc<Vec<String>>)>,
     maze_image: Image<Pxl>,
     player_icon: Image<Pxl>,
     walls: HashSet<(Point, Point)>,
@@ -82,7 +82,7 @@ impl Maze {
     #[pyo3(signature = (*, draw_path))]
     fn compute_solution(&mut self, py: Python, draw_path: bool) {
         let (n_moves, moves, solution) = a_star_solution(&self.walls, self.width, self.height);
-        self.solution_moves = Some((n_moves, moves));
+        self.solution_moves = Some((n_moves, Arc::new(moves)));
 
         if draw_path {
             self.draw_solution(py, &solution);
@@ -98,21 +98,18 @@ impl Maze {
     /// this call clones a Rust object and converts it to Python,
     /// which introduces a significant amount of overhead (use it sparingly!)
     fn get_solution_expensively<'py>(&mut self, py: Python<'py>) -> PyResult<&'py PyAny> {
-        if self.solution_moves.is_none() {
-            const MSG: &str = "make sure to call `.compute_solution()` first";
-            return Err(SolutionNotFound::new_err(MSG));
-        }
+        const MSG: &str = "make sure to call `.compute_solution()` first";
+        let m = match self.solution_moves {
+            None => return Err(SolutionNotFound::new_err(MSG)),
+            Some(ref m) => m,
+        };
 
-        let solution = self.solution_moves.clone().unwrap();
-
+        let solution_args = PyTuple::new(py, [m.0.to_object(py), m.1.clone().to_object(py)]);
         let collections = py.import("collections")?;
-        let tuple_fields = ["move_count", "directions"].into_py(py);
-        let type_args = PyTuple::new(py, ["Solution".into_py(py), tuple_fields]);
-
         collections
             .getattr("namedtuple")?
-            .call1(type_args)? // instantiates the namedtuple type
-            .call1(solution) // instantiates an instance of said type
+            .call1(("Solution", ("move_count", "directions")))? // instantiates the namedtuple type
+            .call1(solution_args) // instantiates an instance of said type
     }
 
     /// clones the maze image into a `io.BytesIO` buffer in Python

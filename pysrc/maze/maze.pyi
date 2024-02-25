@@ -3,15 +3,14 @@ Maze and maze image generation
 """
 
 from io import BytesIO
-from typing import List, NamedTuple, Tuple, Sequence
+from typing import List, NamedTuple, Sequence, Tuple
 from typing_extensions import Never
 
 __version__: str
 __all__: Tuple[str, ...]
 
 _XY = _Direction = Tuple[int, int]
-_Rgb = Sequence[int]
-_Rgba = Sequence[int]
+_Rgb = _Rgba = Sequence[int]
 
 UP: _Direction
 DOWN: _Direction

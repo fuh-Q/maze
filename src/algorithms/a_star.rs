@@ -37,7 +37,7 @@ fn match_diff(diff: (i32, i32), max: bool, amt: i32) -> String {
         (-1, 0) => if max { "⇇ Max left (+1)".to_string() } else { format!("⇽ {amt} left (+{amt})") },
         (1, 0) => if max { "⇉ Max right (+1)".to_string() } else { format!("⇾ {amt} right (+{amt})") },
 
-        _ => panic!("the above branches cover all possibilities")
+        _ => unreachable!("the above branches cover all possibilities")
     }
 }
 
@@ -74,28 +74,26 @@ fn remaining_length(
 /// this will count the moves in a solution, with the above condition in mind
 ///
 /// this function is quite long, so it's been split into two parts
-fn get_moves(width: i32, height: i32, path: &EdgeVec, walls: &EdgeSet) -> (i32, Vec<String>) {
-    // not pre-allocating as perfect moves and path length can drastically differ
-    // "perfect moves" accounts for max-moving in one direction
-    // the solution path, is just as if you moved one space at a time
+fn get_moves(
+    width: i32,
+    height: i32,
+    path: &EdgeVec,
+    walls: &EdgeSet,
+) -> (MoveCount, UserFriendlyDirections) {
     let mut n_moves = 0;
     let mut perfect_run = vec![];
-    let mut prev_diff: Option<(i32, i32)> = None;
+    let (_, first_af) = path.iter().copied().next().unwrap(); // path is never empty
+    let mut prev_diff = (0 - first_af.0, 0 - first_af.1);
     let mut prev_turn_point = (0, 0);
 
     for (before, current) in path.iter().copied() {
         let diff = (current.0 - before.0, current.1 - before.1);
-
-        // `if let` plus a comparison on the matched value in the same expression is unstable
-        // so i flipped the if statement around
-        if prev_diff.is_none() {
-            prev_diff = Some(diff);
-        } else if prev_diff.unwrap() == diff {
+        if prev_diff == diff {
             continue;
         }
 
-        let old_diff = prev_diff.unwrap(); // it's not none
-        prev_diff = Some(diff);
+        let old_diff = prev_diff;
+        prev_diff = diff;
 
         let diff_to_prev = (
             i32::abs_diff(prev_turn_point.0, before.0),
@@ -135,7 +133,7 @@ fn get_moves(width: i32, height: i32, path: &EdgeVec, walls: &EdgeSet) -> (i32, 
 
     n_moves += 1;
     perfect_run.push(match_diff(
-        prev_diff.unwrap(),
+        prev_diff,
         // maze coordinates are zero-indexed, so width and height are adjusting accordingly
         prev_turn_point != (width - 2, height - 1) && prev_turn_point != (width - 1, height - 2),
         1,
@@ -164,44 +162,48 @@ fn trace_path(min: i32, mut current: AStarNode, closed: &HashMap<Point, AStarNod
 
 /// part of the function below
 fn a_star_for_neighbours(
-    neighbours: Vec<Point>,
+    neighbours: &Vec<Point>,
     best: AStarNode,
     walls: &EdgeSet,
     end: Point,
     open: &mut HashSet<AStarNode>,
     closed: &HashMap<Point, AStarNode>,
 ) {
-    for neighbour in neighbours {
-        if walls.contains(&(best.xy, neighbour)) || walls.contains(&(neighbour, best.xy)) {
-            continue;
-        }
+    let f_predicate = |&n: &&(i32, i32)| {
+        !walls.contains(&(best.xy, *n))
+            && !walls.contains(&(*n, best.xy))
+            && !closed.contains_key(&n)
+    };
 
-        let h_cost = end.0 - neighbour.0 + end.1 - neighbour.1;
-        let g_cost = neighbour.0 + neighbour.1;
-
+    neighbours.iter().filter(f_predicate).for_each(|n| {
+        let h_cost = end.0 - n.0 + end.1 - n.1;
+        let g_cost = n.0 + n.1;
         let node = AStarNode {
-            xy: neighbour,
+            xy: *n,
             parent: best.xy,
             f_cost: g_cost + h_cost,
             g_cost,
         };
 
-        if closed.contains_key(&neighbour) {
-            continue;
-        }
-
-        if g_cost < best.g_cost || !open.contains(&node) {
+        if node.g_cost < best.g_cost || !open.contains(&node) {
             open.insert(node);
         }
-    }
+    });
 }
+
+type MoveCount = i32;
+type UserFriendlyDirections = Vec<String>;
 
 /// uses the A* algorithm to compute a maze's solution
 ///
 /// this was quite a long function, so it's been split into multiple parts
 ///
 /// <https://www.youtube.com/watch?v=-L-WgKMFuhE> great video btw, a pure no-bullshit runthrough of A*
-pub fn a_star_solution(walls: &EdgeSet, width: i32, height: i32) -> (i32, Vec<String>, EdgeVec) {
+pub fn a_star_solution(
+    walls: &EdgeSet,
+    width: i32,
+    height: i32,
+) -> (MoveCount, UserFriendlyDirections, EdgeVec) {
     let min = width + height - 2; // theoretical minimum amount of moves it takes to finish a maze of a given size
     let mut open: HashSet<AStarNode> = HashSet::with_capacity(min as usize);
     let mut closed: HashMap<Point, AStarNode> = HashMap::with_capacity(min as usize);
@@ -216,7 +218,7 @@ pub fn a_star_solution(walls: &EdgeSet, width: i32, height: i32) -> (i32, Vec<St
     open.insert(start_node);
 
     let end = (width - 1, height - 1);
-    let current = loop {
+    let last_node = loop {
         let best = open
             .iter()
             .min_by(|a, b| i32::cmp(&a.f_cost, &b.f_cost))
@@ -230,10 +232,10 @@ pub fn a_star_solution(walls: &EdgeSet, width: i32, height: i32) -> (i32, Vec<St
         }
 
         let neighbours = all_neighbours(best.xy, width, height);
-        a_star_for_neighbours(neighbours, best, walls, end, &mut open, &closed);
+        a_star_for_neighbours(&neighbours, best, walls, end, &mut open, &closed);
     };
 
-    let path = trace_path(min, current, &closed);
+    let path = trace_path(min, last_node, &closed);
     let (n_moves, moves) = get_moves(width, height, &path.iter().rev().copied().collect(), walls);
 
     (n_moves, moves, path)

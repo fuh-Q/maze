@@ -3,11 +3,10 @@ use crate::types::{EdgeSet, EdgeVec, Pxl};
 use image::{imageops, GenericImage, Pixel, Rgba, RgbaImage};
 use imageproc::{definitions::Image, drawing::draw_filled_rect_mut, rect::Rect};
 
-use pyo3::types::PyBytes;
+use pyo3::prelude::*;
 use rayon::prelude::*;
 
-use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyValueError, types::PyBytes};
 
 use std::cell::UnsafeCell;
 
